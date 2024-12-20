@@ -20,9 +20,9 @@ pub fn main() {
         .map(parse_instruction)
         .collect::<Vec<Instruction>>();
 
-    let part2 = do_instructions(&instructions, false);
+    let total = do_instructions(&instructions, false);
 
-    println!("Part 2: {}", part2);
+    println!("Total sum of enabled multiplications: {}", total);
 }
 
 fn parse_instruction(instruction: Captures) -> Instruction {
