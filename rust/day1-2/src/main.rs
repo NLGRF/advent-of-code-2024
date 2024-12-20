@@ -3,19 +3,22 @@ use std::fs::File;
 use std::io::{self, BufRead};
 use std::path::Path;
 use regex::Regex;
+use once_cell::sync::Lazy;
+
+static RE: Lazy<Regex> = Lazy::new(|| Regex::new(r"\s+").unwrap());
 
 fn main() -> io::Result<()> {
-    // Read input from file
+    // อ่านข้อมูลจากไฟล์
     let input = read_lines("input.txt")?;
     
-    // Parse the input into two vectors
+    // แยกข้อมูลเป็นสองลิสต์
     let (left_list, right_list) = parse_input(input);
     
-    // Calculate the similarity score
+    // คำนวณคะแนนความคล้ายคลึง
     let similarity_score = calculate_similarity_score(&left_list, &right_list);
     
-    // Output the result
-    println!("Similarity score: {}", similarity_score);
+    // แสดงผลลัพธ์
+    println!("Similarity score Opt: {}", similarity_score);
     
     Ok(())
 }
@@ -30,14 +33,11 @@ where
 }
 
 fn parse_input(input: Vec<String>) -> (Vec<i32>, Vec<i32>) {
-    let mut left_list = Vec::new();
-    let mut right_list = Vec::new();
+    let mut left_list = Vec::with_capacity(input.len());
+    let mut right_list = Vec::with_capacity(input.len());
     
-    // Define a regex for splitting on whitespace (tabs or spaces)
-    let re = Regex::new(r"\s+").unwrap();
-
     for line in input {
-        let parts: Vec<&str> = re.split(&line).collect();
+        let parts: Vec<&str> = RE.split(&line).collect();
         if parts.len() == 2 {
             if let (Ok(left_num), Ok(right_num)) = (parts[0].trim().parse(), parts[1].trim().parse()) {
                 left_list.push(left_num);
@@ -50,14 +50,12 @@ fn parse_input(input: Vec<String>) -> (Vec<i32>, Vec<i32>) {
 }
 
 fn calculate_similarity_score(left_list: &[i32], right_list: &[i32]) -> i32 {
-    // Count occurrences of each number in the right list
-    let mut right_counts: HashMap<i32, i32> = HashMap::new();
-    for &num in right_list {
-        *right_counts.entry(num).or_insert(0) += 1;
-    }
+    let right_counts = right_list.iter().fold(HashMap::new(), |mut acc, &num| {
+        *acc.entry(num).or_insert(0) += 1;
+        acc
+    });
 
-    // Calculate the similarity score
     left_list.iter()
-        .map(|&num| num * right_counts.get(&num).unwrap_or(&0))
+        .filter_map(|&num| right_counts.get(&num).map(|&count| num * count))
         .sum()
 }

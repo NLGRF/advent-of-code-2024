@@ -2,6 +2,9 @@ use std::fs::File;
 use std::io::{self, BufRead};
 use std::path::Path;
 use regex::Regex;
+use once_cell::sync::Lazy;
+
+static RE: Lazy<Regex> = Lazy::new(|| Regex::new(r"\s+").unwrap());
 
 fn main() -> io::Result<()> {
     // Read input from file
@@ -11,8 +14,8 @@ fn main() -> io::Result<()> {
     let (mut left_list, mut right_list) = parse_input(input);
     
     // Sort both lists
-    left_list.sort();
-    right_list.sort();
+    left_list.sort_unstable();
+    right_list.sort_unstable();
     
     // Calculate the total distance
     let total_distance = calculate_total_distance(&left_list, &right_list);
@@ -33,14 +36,11 @@ where
 }
 
 fn parse_input(input: Vec<String>) -> (Vec<i32>, Vec<i32>) {
-    let mut left_list = Vec::new();
-    let mut right_list = Vec::new();
+    let mut left_list = Vec::with_capacity(input.len());
+    let mut right_list = Vec::with_capacity(input.len());
     
-    // Define a regex for splitting on whitespace (tabs or spaces)
-    let re = Regex::new(r"\s+").unwrap();
-
     for line in input {
-        let parts: Vec<&str> = re.split(&line).collect();
+        let parts: Vec<&str> = RE.split(&line).collect();
         if parts.len() == 2 {
             if let (Ok(left_num), Ok(right_num)) = (parts[0].trim().parse(), parts[1].trim().parse()) {
                 left_list.push(left_num);
@@ -48,9 +48,6 @@ fn parse_input(input: Vec<String>) -> (Vec<i32>, Vec<i32>) {
             }
         }
     }
-    
-    println!("Left list: {:?}", left_list);  // Debugging
-    println!("Right list: {:?}", right_list); // Debugging
     
     (left_list, right_list)
 }
